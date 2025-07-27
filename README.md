@@ -24,7 +24,7 @@ http://localhost:8000/api/
 http://localhost:8000/api/swagger
 
 ## Docker
-if you use Docker, change "DATABASE_HOST" in .env from "27.0.0.1" to "db"
+if you use Docker, change "DATABASE_HOST" in .env from "127.0.0.1" to "db"
 
 ---
 
