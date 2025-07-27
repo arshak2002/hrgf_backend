@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Environment
+.env
+
+# Django static/media
+staticfiles/
+media/
+
+# Docker
+*.log
+*.pid
+*.swp
+*.bak
+*.tmp
+*.pyc
+
+# VSCode
+.vscode/
+
+# Migrations
+*/migrations/__pycache__/
+*/migrations/*.pyc
+*/migrations/*.pyo
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+
+# Docker volumes
+volumes/
+
+# System
+.DS_Store

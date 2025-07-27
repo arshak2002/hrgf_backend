@@ -1,0 +1,52 @@
+from rest_framework import serializers
+from .models import Product, Category, CartItem, Order, OrderItem, ProductImage
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'image']
+
+class ProductSerializer(serializers.ModelSerializer):
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    images = ProductImageSerializer(many=True, write_only=True, required=False)
+    images_list = ProductImageSerializer(source='productimage_set', many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'price', 'category', 'created_by', 'image', 'images', 'images_list']
+
+    def create(self, validated_data):
+        images_data = validated_data.pop('images', [])
+        product = Product.objects.create(**validated_data)
+        for img in images_data:
+            ProductImage.objects.create(product=product, **img)
+        return product
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(), source='product', write_only=True
+    )
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'product_id', 'quantity', 'created_at', 'updated_at']
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'quantity', 'created_at', 'updated_at']
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'user', 'created_at', 'items']
