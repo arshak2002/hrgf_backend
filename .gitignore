@@ -34,3 +34,6 @@ volumes/
 
 # System
 .DS_Store
+
+env
+venv
