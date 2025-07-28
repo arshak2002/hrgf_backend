@@ -46,6 +46,9 @@ cp .env.example .env
 brew install redis
 brew services start redis
 
+# for pdf generation (WeasyPrint) Mac
+brew install cairo pango gdk-pixbuf libffi 
+
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
@@ -54,6 +57,16 @@ python manage.py runserver
 celery -A hrgf worker --loglevel=info
 
 ## Setup With Docker
+
+# if your using docker
+RUN apt-get update && apt-get install -y \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 docker-compose up --build
 

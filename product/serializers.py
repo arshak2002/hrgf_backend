@@ -46,7 +46,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    receipt_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'created_at', 'items']
+        fields = ['id', 'user', 'created_at', 'items', 'receipt_url', 'total_amount']
+
+    def get_receipt_url(self, obj):
+        if obj.receipt:
+            return obj.receipt.url
+        return None

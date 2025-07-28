@@ -1,11 +1,14 @@
 # ecommerce_api/viewsets.py
 from rest_framework import status
+from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 import stripe
+from django.core.files import File
 
+from .utils import generate_order_receipt_pdf
 from product.tasks import send_order_confirmation_email
 from .models import Payment, Product, Category, CartItem, Order
 from .serializers import (
@@ -14,6 +17,9 @@ from .serializers import (
 )
 from .permissions import IsOwnerOrAdmin
 from django.conf import settings
+from django.template.loader import render_to_string
+from weasyprint import HTML
+import tempfile
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -113,7 +119,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             user=user,
             payment_intent_id=intent.id,
             payment_status=intent.status,
+            total_amount=total_amount
         )
+
+        pdf_path = generate_order_receipt_pdf(order)
+        with open(pdf_path, 'rb') as f:
+            order.receipt.save(f"order_{order.id}.pdf", File(f), save=True)
 
         for product, quantity in products:
             order.items.create(product=product, quantity=quantity)
@@ -122,64 +133,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return Response(OrderSerializer(order).data, status=201)
 
-    # @action(detail=False, methods=['post'], url_path='place-order')
-    # def place_order(self, request):
-    #     user = request.user
-    #     payment_method_id = request.data.get("payment_method_id")
-    #     product_id = request.data.get("product")
-    #     quantity = request.data.get("quantity")
+    @action(detail=True, methods=["get"], url_path="download-receipt")
+    def download_receipt(self, request, pk=None):
+        try:
+            order = Order.objects.get(pk=pk, user=request.user)
+        except Order.DoesNotExist:
+            return Response({"detail": "Order not found."}, status=404)
 
-    #     if not product_id and quantity:
-    #         return Response({"detail": "product and quantity is required."}, status=status.HTTP_400_BAD_REQUEST)
+        html_string = render_to_string("order_receipt.html", {"order": order,"items":order.items.all})
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
 
-    #     if not payment_method_id:
-    #         return Response({"detail": "payment_method_id is required."}, status=status.HTTP_400_BAD_REQUEST)
-        
-    #     try:
-    #         product = Product.objects.get(id=product_id)
-    #     except Product.DoesNotExist:
-    #         return Response({"detail": f"Invalid product ID {product_id}"})
-
-    #     # Calculate total amount in paise (Stripe uses smallest currency unit)
-    #     total_amount = int(quantity) * product.price
-    #     amount_in_paise = int(total_amount * 100)
-
-    #     try:
-    #         # Create and confirm PaymentIntent
-    #         intent = stripe.PaymentIntent.create(
-    #             amount=amount_in_paise,
-    #             currency="inr",
-    #             payment_method=payment_method_id,
-    #             confirm=True,
-    #             automatic_payment_methods={
-    #                 "enabled": True,
-    #                 "allow_redirects": "never"
-    #             }
-    #         )
-
-    #         if intent.status != "succeeded":
-    #             return Response({"detail": "Payment failed or requires additional action."}, status=400)
-
-    #     except stripe.error.CardError as e:
-    #         return Response({"detail": str(e)}, status=400)
-        
-    #     Payment.objects.create(
-    #         user=request.user,
-    #         amount=total_amount,
-    #         stripe_payment_intent_id=intent.id,
-    #         status=intent.status,
-    #     )
-
-    #     # Create order
-    #     order = Order.objects.create(
-    #         user=user,
-    #         payment_intent_id=intent.id,
-    #         payment_status=intent.status,
-    #     )
-
-    #     # Trigger email sending via Celery
-    #     send_order_confirmation_email.delay(user.email, order.id)
-
-    #     order.items.create(product=product, quantity=quantity)
-
-    #     return Response(OrderSerializer(order).data, status=201)
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="order_{order.id}_receipt.pdf"'
+        return response
