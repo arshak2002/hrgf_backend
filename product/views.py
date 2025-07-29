@@ -147,3 +147,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="order_{order.id}_receipt.pdf"'
         return response
+    
+    @action(detail=False, methods=["get"], url_path="all-orders")
+    def all_orders(self, request, pk=None):
+        orders = Order.objects.all()
+        serializer = OrderSerializer(orders,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)

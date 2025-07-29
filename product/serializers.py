@@ -47,12 +47,24 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     receipt_url = serializers.SerializerMethodField(read_only=True)
+    user_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'created_at', 'items', 'receipt_url', 'total_amount']
+        fields = ['id', 'user', 'created_at', 'items', 'receipt_url', 'total_amount', 'user_details', 'payment_status']
 
     def get_receipt_url(self, obj):
         if obj.receipt:
             return obj.receipt.url
         return None
+    
+    def get_user_details(self,obj):
+        user = obj.user
+        if user:
+            data = {
+                "email":user.email,
+                "first_name":user.first_name
+            }
+            return data
+        else:
+            return None
