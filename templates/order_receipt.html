@@ -2,38 +2,113 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <title>Order Receipt</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        h2 { color: #444; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        th { background: #f4f4f4; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px;
+            background-color: #f7f9fb;
+            color: #333;
+        }
+
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
+            padding: 40px;
+        }
+
+        .company-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .company-header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 32px;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        p {
+            line-height: 1.6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        tfoot td {
+            font-weight: bold;
+            border: none;
+            padding-top: 20px;
+        }
+
+        .total {
+            font-size: 18px;
+            margin-top: 20px;
+            text-align: right;
+            color: #2c3e50;
+        }
     </style>
 </head>
 <body>
-    <h2>Order Receipt</h2>
-    <p><strong>Order ID:</strong> {{ order.id }}</p>
-    <p><strong>User:</strong> {{ order.user.email }}</p>
-    <p><strong>Payment ID:</strong> {{ order.payment_intent_id }}</p>
-    <p><strong>Status:</strong> {{ order.payment_status }}</p>
-    <p><strong>Date:</strong> {{ order.created_at }}</p>
+    <div class="receipt-container">
+        <div class="company-header">
+            <h1>HRGF E-Com</h1>
+        </div>
 
-    <h3>Items:</h3>
-    <table>
-        <tr>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Price</th>
-        </tr>
-        {% for item in items %}
-        <tr>
-            <td>{{ item.product.name }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>₹ {{ item.product.price }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+        <h2>Order Receipt</h2>
+        <p><strong>Order ID:</strong> {{ order.id }}</p>
+        <p><strong>User:</strong> {{ order.user.email }}</p>
+        <p><strong>Payment ID:</strong> {{ order.payment_intent_id }}</p>
+        <p><strong>Status:</strong> {{ order.payment_status }}</p>
+        <p><strong>Date:</strong> {{ order.created_at }}</p>
 
-    <h3>Total: ₹ {{ order.total_amount }}</h3>
+        <h3>Items:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.product.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total">
+            Total Amount: ₹ {{ order.total_amount }}
+        </div>
+    </div>
 </body>
 </html>
