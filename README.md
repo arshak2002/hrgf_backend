@@ -28,6 +28,10 @@ if you use Docker, change "DATABASE_HOST" in .env from "127.0.0.1" to "db"
 
 ---
 
+## Advanced Features
+sending Email to user when order placed
+Receipt download option in 'orders' menu item for user
+
 ## Clone the Project
 
 ```bash
